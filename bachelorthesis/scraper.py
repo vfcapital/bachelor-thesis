@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 CHAIN = "ethereum"
 CATEGORY = "art"
 
+ETHERSCAN_KEY = "4TBHVWQDA6MMBY26PE4VTW1YDWMPZKFN1U"
+
 def _get_slugs_link():
     return f"https://opensea.io/rankings?sortBy=total_volume&chain={CHAIN}&category={CATEGORY}"
 

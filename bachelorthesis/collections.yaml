@@ -6,6 +6,7 @@
   address: '0x0cfb5d82be2b949e8fa73a656df91821e2ad99fd'
   category: art
   chain: ethereum
+  nft_trades_path: "viktor/nft_trades/10ktf_nft_trades.csv"
 1111-by-kevin-abosch:
   address: '0x7f72528229f85c99d8843c0317ef91f4a2793edf'
   category: art

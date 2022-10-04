@@ -10,26 +10,12 @@ def _get_total_records():
     return records_count
 
 def open_download_page(url):
-    moveTo(300, 150)
+    moveTo(600, 150)
     click()
     hotkey("ctrl", "t")
     write(url)
     press("enter")
-    sleep(2) # wait for security check
-    moveTo(200, 400)
-    click()
-    sleep(0.5)
-    moveTo(300, 500)
-    click()
-    sleep(8)
-    records_count = _get_total_records()
-    sleep(1)
-    hotkey("ctrl", "f")
-    write("csv")
-    press("enter")
-    press("esc")
-    press("enter")
-    return records_count
+
 
 
 def select_download_date(month_diff):

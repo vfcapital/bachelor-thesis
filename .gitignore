@@ -2,3 +2,4 @@
 *checkpoints*
 venv/
 *egg-info*
+*.csv

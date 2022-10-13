@@ -70,11 +70,52 @@ def format_trades_df(df):
 
 
 def plot_total_nft_volume(nft_trades):
-    return nft_trades[["date", "price_usd"]].rename(columns={"price_usd": "USD"}).groupby(
-        "date"
-    ).sum().plot(grid=True, logy=True, title="Total NFT volume per [log values]")
+    return (
+        nft_trades[["date", "price_usd"]]
+        .rename(columns={"price_usd": "USD"})
+        .groupby("date")
+        .sum()
+        .plot(grid=True, logy=True, title="Total NFT volume per [log values]")
+    )
 
 
-def calculated_trade_profits(nft_trades):
-    profits = nft_trades.copy()
-    return profits
+def get_trade_count(nft_trades):
+    nft_trades["trade_count"] = None
+    nft_list = nft_trades["nft_id"].tolist()
+    i = 0
+    for nft in nft_list:
+        nft_counter = 0
+        try:
+            while nft == nft_list[i]:
+                nft_counter += 1
+                nft_trades.loc[i, "trade_count"] = nft_counter
+                i += 1
+        except: 
+            break
+    return nft_trades.set_index(["nft_id", "trade_count"])
+
+def calculate_profits(nft_trades):
+    nft_profits = (
+        nft_trades[["price_usd"]]
+        .reset_index()
+        .pivot(index="nft_id", columns="trade_count", values="price_usd")
+    )
+    for column in nft_profits.columns[1:]:
+        nft_profits["profit_" + str(column)] = (
+            nft_profits[column] / nft_profits[column - 1] - 1
+        )
+    return nft_profits
+
+def get_top_collections(nft_trades, n=5):
+    top_collections = (
+        nft_trades[["NFT", "price_usd"]]
+        .groupby("NFT")
+        .sum()
+        .sort_values("price_usd", ascending=False)
+        .head(n)
+        .astype(int)
+    )
+    top_collections.price_usd = top_collections.price_usd.apply(
+        lambda x: "${:,}".format(x)
+    )
+    return top_collections

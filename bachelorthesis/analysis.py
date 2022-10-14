@@ -14,7 +14,7 @@ def single_trade_files_to_one():
     return pd.concat(trades_list).drop("Unnamed: 0", axis=1)
 
 
-def keep_multiple_trades_nfts(df):
+def _keep_multiple_trades_nfts(df):
     df_formatted = df[
         (df.nft_id.isin(list(df[df.nft_id.duplicated(keep=False)].nft_id.unique())))
     ]
@@ -42,7 +42,7 @@ def format_trades_df(df):
             & (df_formatted.Price.str.contains("$"))
             & (df_formatted["Price"].str.contains("ETH"))
         ]
-        .pipe(keep_multiple_trades_nfts)
+        .pipe(_keep_multiple_trades_nfts)
         .drop_duplicates(subset=["timestamp", "nft_id"], keep="first")
         .drop_duplicates(subset=["Txn Hash", "nft_id"], keep="first")
     )
@@ -61,7 +61,7 @@ def format_trades_df(df):
     )
     df_formatted = (
         df_formatted[(df_formatted.price_eth < 1000) & (df_formatted.price_usd > 0)]
-        .pipe(keep_multiple_trades_nfts)
+        .pipe(_keep_multiple_trades_nfts)
         .sort_values(["nft_id", "timestamp"])
         .reset_index(drop=True)
         .drop("UnixTimestamp", axis=1)

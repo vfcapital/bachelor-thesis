@@ -25,7 +25,7 @@ def format_trades_df(df):
     df_formatted = (
         df.drop("Unnamed: 0", axis=1)
         .reset_index(drop=True)
-        .rename(columns={"Date Time (UTC)": "timestamp", "Txn hash": "hash"})
+        .rename(columns={"Date Time (UTC)": "timestamp", "Txn Hash": "txn_hash"})
     )
     df_formatted["nft_id"] = (
         df_formatted["NFT"] + "_" + df_formatted["Token ID"].astype(str)
@@ -44,7 +44,7 @@ def format_trades_df(df):
         ]
         .pipe(_keep_multiple_trades_nfts)
         .drop_duplicates(subset=["timestamp", "nft_id"], keep="first")
-        .drop_duplicates(subset=["Txn Hash", "nft_id"], keep="first")
+        .drop_duplicates(subset=["txn_hash", "nft_id"], keep="first")
     )
     df_formatted["price_usd"] = (
         df_formatted["Price"]
@@ -66,7 +66,9 @@ def format_trades_df(df):
         .reset_index(drop=True)
         .drop("UnixTimestamp", axis=1)
     )
-    return df_formatted[["date", "nft_id", "price_eth", "price_usd", "NFT", "Buyer"]]
+    return df_formatted[
+        ["date", "nft_id", "price_eth", "price_usd", "NFT", "Buyer", "txn_hash"]
+    ]
 
 
 def plot_total_nft_volume(nft_trades):
@@ -90,32 +92,92 @@ def get_trade_count(nft_trades):
                 nft_counter += 1
                 nft_trades.loc[i, "trade_count"] = nft_counter
                 i += 1
-        except: 
+        except:
             break
     return nft_trades.set_index(["nft_id", "trade_count"])
 
+
 def calculate_profits(nft_trades):
-    nft_profits = (
-        nft_trades[["price_usd"]]
-        .reset_index()
-        .pivot(index="nft_id", columns="trade_count", values="price_usd")
+    nft_profits = nft_trades.reset_index()
+
+    nft_profits["profit_eth"] = None
+    nft_profits["profit_usd"] = None
+    nft_profits["purchase_price_eth"] = nft_profits["price_eth"].shift()
+    nft_profits["purchase_price_usd"] = nft_profits["price_usd"].shift()
+    nft_profits["purchase_date"] = nft_profits["date"].shift()
+    nft_profits["sell_date"] = nft_profits["date"].copy()
+    nft_profits["from_address"] = nft_profits["Buyer"].shift()
+    nft_profits["to_address"] = nft_profits["Buyer"].copy()
+    nft_profits["purchase_hash"] = nft_profits["txn_hash"].shift()
+    nft_profits["sell_hash"] = nft_profits["txn_hash"].copy()
+    
+    
+    nft_profits["holding_period"] = (
+        nft_profits["sell_date"] - nft_profits["purchase_date"]
     )
-    for column in nft_profits.columns[1:]:
-        nft_profits["profit_" + str(column)] = (
-            nft_profits[column] / nft_profits[column - 1] - 1
-        )
-    return nft_profits
+
+    nft_profits["profit_eth"] = (
+        nft_profits["price_eth"] / nft_profits["price_eth"].shift() - 1
+    )
+    nft_profits["profit_usd"] = (
+        nft_profits["price_usd"] / nft_profits["price_usd"].shift() - 1
+    )
+    nft_profits["trade_count"] = nft_profits["trade_count"] - 1
+    nft_profits = nft_profits.loc[nft_profits["trade_count"] != 0]
+    nft_profits = nft_profits.rename(
+        columns={
+            "price_usd": "sell_price_usd",
+            "price_eth": "sell_price_eth",
+            "NFT": "collection",
+            "trade_count": "trade_no",
+        }
+    )
+    return nft_profits.set_index(["nft_id", "trade_no"])[
+        [
+            "purchase_date",
+            "sell_date",
+            "holding_period",
+            "purchase_price_eth",
+            "sell_price_eth",
+            "profit_eth",
+            "purchase_price_usd",
+            "sell_price_usd",
+            "profit_usd",
+            "collection",
+            "from_address",
+            "to_address",
+            "purchase_hash",
+            "sell_hash",
+        ]
+    ]
+
 
 def get_top_collections(nft_trades, n=5):
     top_collections = (
-        nft_trades[["NFT", "price_usd"]]
-        .groupby("NFT")
+        nft_trades[["collection", "sell_price_usd"]]
+        .groupby("collection")
         .sum()
-        .sort_values("price_usd", ascending=False)
+        .sort_values("sell_price_usd", ascending=False)
         .head(n)
         .astype(int)
     )
-    top_collections.price_usd = top_collections.price_usd.apply(
+    top_collections.sell_price_usd = top_collections.sell_price_usd.apply(
         lambda x: "${:,}".format(x)
     )
     return top_collections
+
+
+def get_top_buyer(nft_trades, n=5):
+    return (
+        nft_trades[["to_address", "sell_price_usd"]]
+        .groupby("to_address")
+        .count()
+        .sort_values("sell_price_usd", ascending=False)
+        .head(n)
+        .astype(int)
+        .rename(columns={"sell_price_usd": "trade_count"})
+    )
+
+
+def get_timedelta(nft_trades):
+    return

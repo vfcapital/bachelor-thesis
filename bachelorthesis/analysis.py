@@ -177,7 +177,3 @@ def get_top_buyer(nft_trades, n=5):
         .astype(int)
         .rename(columns={"sell_price_usd": "trade_count"})
     )
-
-
-def get_timedelta(nft_trades):
-    return

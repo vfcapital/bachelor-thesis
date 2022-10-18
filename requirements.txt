@@ -52,6 +52,7 @@ pyzmq==24.0.1
 requests==2.28.1
 scikit-learn==1.1.2
 scipy==1.9.1
+seaborn==0.12.0
 six==1.16.0
 sklearn==0.0
 soupsieve==2.3.2.post1
@@ -61,7 +62,7 @@ toml==0.10.2
 tornado==6.2
 traitlets==5.4.0
 typing_extensions==4.4.0
--e git+ssh://git@github.com/vfcapital/bachelor-thesis.git@9fa3da8b2e9d4bfd3c314ffa8a5339be57c7c54f#egg=UNKNOWN
+-e git+ssh://git@github.com/vfcapital/bachelor-thesis.git@e797a60fc8e65ae4f0a1099ae18c3acc9d74f6a9#egg=UNKNOWN
 urllib3==1.26.12
 virtualenv==20.16.5
 wcwidth==0.2.5

@@ -1,6 +1,8 @@
-from pyautogui import *
 from time import sleep
-from tkinter import Tk  
+from tkinter import Tk
+
+from pyautogui import *
+
 
 def _get_total_records():
     moveTo(227, 450)
@@ -9,13 +11,13 @@ def _get_total_records():
     records_count = Tk().clipboard_get().replace(" ", "").replace(",", "")
     return records_count
 
+
 def open_download_page(url):
     moveTo(600, 150)
     click()
     hotkey("ctrl", "t")
     write(url)
     press("enter")
-
 
 
 def select_download_date(month_diff):
@@ -39,10 +41,10 @@ def select_download_date(month_diff):
 def captcha():
     moveTo(950, 720)
     click()
-    
+
+
 def next_download(month_diff):
     moveTo(700, 535)
     click()
     hotkey("ctrl", "r")
     sleep(3)
-    

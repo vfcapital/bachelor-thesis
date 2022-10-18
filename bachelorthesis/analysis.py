@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import yaml
 
@@ -110,17 +111,16 @@ def calculate_profits(nft_trades):
     nft_profits["to_address"] = nft_profits["Buyer"].copy()
     nft_profits["purchase_hash"] = nft_profits["txn_hash"].shift()
     nft_profits["sell_hash"] = nft_profits["txn_hash"].copy()
-    
-    
+
     nft_profits["holding_period"] = (
         nft_profits["sell_date"] - nft_profits["purchase_date"]
     )
 
-    nft_profits["profit_eth"] = (
-        nft_profits["price_eth"] / nft_profits["price_eth"].shift() - 1
+    nft_profits["profit_eth"] = np.log(
+        nft_profits["price_eth"] / nft_profits["price_eth"].shift()
     )
-    nft_profits["profit_usd"] = (
-        nft_profits["price_usd"] / nft_profits["price_usd"].shift() - 1
+    nft_profits["profit_usd"] = np.log(
+        nft_profits["price_usd"] / nft_profits["price_usd"].shift()
     )
     nft_profits["trade_count"] = nft_profits["trade_count"] - 1
     nft_profits = nft_profits.loc[nft_profits["trade_count"] != 0]

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import yaml
+from sklearn.cluster import KMeans
 
 
 def single_trade_files_to_one():
@@ -177,3 +178,14 @@ def get_top_buyer(nft_trades, n=5):
         .astype(int)
         .rename(columns={"sell_price_usd": "trade_count"})
     )
+
+
+def get_return_per_eth(nft_trades, min_eth, max_eth, ax):
+    nft_trades_limited = nft_trades[
+        (nft_trades["purchase_price_eth"] < max_eth)
+        & (nft_trades["purchase_price_eth"] > min_eth)
+    ].reset_index()[["purchase_price_eth", "profit_usd"]]
+    y_pred = KMeans(5, n_init=100, max_iter=1000, algorithm="elkan")
+    y_pred.fit(nft_trades_limited)
+    nft_trades_limited["K-Means Profit Cluster"] = y_pred.labels_.astype(float)
+    return nft_trades_limited

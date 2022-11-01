@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import yaml
+from matplotlib.ticker import FuncFormatter
 from sklearn.cluster import KMeans
 
 
@@ -235,7 +236,7 @@ def plot_limited(nft_trades_limited, min_eth, max_eth, currency, ax):
     )
 
     ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, p: format(int(x), ',')))
     ax.axhline(y=0, color="red", alpha=0.5, label="Log-Return: 0.0%", linestyle="--")
     ax.axhline(
         y=nft_trades_limited["profit_" + currency].mean(),
@@ -296,38 +297,42 @@ def collections_to_latex(nft_trades):
 
 
 def plot_correl_heatmap(correl_matrix):
-    sns.heatmap(correl_matrix, annot=True, vmin=-1, vmax=1)
+    sns.heatmap(correl_matrix, annot=True, vmin=0, vmax=1, cmap="coolwarm")
     plt.savefig("figures/correl.png")
     plt.show()
 
 
 def plot_count_trades_per_day(nft_trades):
-    nft_trades["sell_date"] = pd.to_datetime(nft_trades["sell_date"])
+    nft_trades["date"] = pd.to_datetime(nft_trades["date"])
 
     plot_df = (
-        nft_trades[["sell_date", "profit_usd"]]
-        .groupby("sell_date")
+        nft_trades[["date", "price_usd"]]
+        .groupby("date")
         .count()
-        .rename(columns={"profit_usd": "Count of Trades"})
+        .rename(columns={"price_usd": "Count of Trades per Day"})
         .loc["2019-01-01":]
         .reset_index()
     )
 
     ax = plot_df.plot.line(
-        x="sell_date",
-        y="Count of Trades",
+        x="date",
+        y="Count of Trades per Day",
         # c="Cluster",
         color="black",
-        grid=True,
         xlabel="",
         # marker=".",
         ylabel="",
-        title="Count of Trades per Day",
+        yticks=[500, 2500, 4500],
+        alpha=0.65,
+        title="Transactions per Day",
     )
+    ax.legend(frameon=False, loc="upper left")
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     ax.xaxis.set_major_locator(mdates.MonthLocator([3, 9]))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("\n%b\n%Y"))
     ax.set_xticklabels(ax.xaxis.get_majorticklabels(), rotation=0)
-
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda x, p: format(int(x), ",")))
     plt.savefig("figures/trades_per_day.png")
     plt.show()
 
@@ -338,7 +343,48 @@ def get_counts(nft_trades):
         f"Trades: {nft_trades.count()[0]}, \n"
         f"Unique NFTs: {len(nft_trades.reset_index().nft_id.unique())}"
     )
-    
+
+
+def describe_series(series):
+    count_value = series.count()
+    total_value = series.sum()
+    min_value = series.min()
+    min_index = series[series == min_value].index[0][0]
+    median = series.median()
+    mean = series.mean()
+    max_value = series.max()
+    max_index = series[series == max_value].index[0][0]
+    std_dev = series.std()
+    values = [
+        count_value,
+        total_value,
+        median,
+        mean,
+        std_dev,
+        min_value,
+        max_value,
+        min_index,
+        max_index,
+    ]
+    return print(
+        pd.DataFrame(
+            index=[
+                "Count",
+                "Total Value",
+                "Median",
+                "Mean",
+                "Std. Dev.",
+                "Min. Value",
+                "Max. Value",
+                "Min. Collection",
+                "Max. Collection",
+            ],
+            data=values,
+            columns=[series.name],
+        ).to_latex()
+    )
+
+
 def outlier_aware_hist(data, lower=None, upper=None):
     if not lower or lower < data.min():
         lower = data.min()
@@ -352,8 +398,8 @@ def outlier_aware_hist(data, lower=None, upper=None):
     else:
         upper_outliers = True
 
-    n, bins, patches = plt.hist(data, range=(lower, upper), bins=50, color="black")
-
+    n, bins, patches = plt.hist(data, range=(lower, upper), bins=44, color="black")
+    data.plot.hist(data, range=(lower, upper), bins=44, color="black")
     if lower_outliers:
         n_lower_outliers = (data < lower).sum()
         patches[0].set_height(patches[0].get_height() + n_lower_outliers)
@@ -366,11 +412,10 @@ def outlier_aware_hist(data, lower=None, upper=None):
         n_upper_outliers = (data > upper).sum()
         patches[-1].set_height(patches[-1].get_height() + n_upper_outliers)
         patches[-1].set_facecolor("m")
-        patches[-1].set_label(
-            f"Outliers: Profit larger than {upper*100}%"
-        )
+        patches[-1].set_label(f"Outliers: Profit larger than {upper*100}%")
 
     if lower_outliers or upper_outliers:
         plt.legend()
+    plt.title("Profit Distribution")
     plt.grid()
     plt.savefig("figures/returns_hist.png")

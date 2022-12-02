@@ -18,7 +18,6 @@ def _get_etherscan_link(address):
 
 
 def _get_html(link):
-    chain = CHAIN
     headers = {
         "Referer": link,
         "sec-ch-ua": '"Chromium";v="104",'
@@ -38,7 +37,7 @@ def _get_html(link):
 def _extract_js_script(link):
     raw_html = _get_html(link)
     soup = BeautifulSoup(raw_html, "lxml")
-    return soup.findAll("script")[0].string
+    return soup#.findAll("script")[0].string
 
 
 def get_slug_names():

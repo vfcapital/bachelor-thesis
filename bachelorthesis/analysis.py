@@ -142,10 +142,10 @@ def calculate_profits(nft_trades):
 
     nft_profits["profit_eth"] = np.log(
         nft_profits["price_eth"] / nft_profits["price_eth"].shift()
-    )
+    ) - 0.025
     nft_profits["profit_usd"] = np.log(
         nft_profits["price_usd"] / nft_profits["price_usd"].shift()
-    )
+    ) - 0.025
     nft_profits["trade_count"] = nft_profits["trade_count"] - 1
     nft_profits = nft_profits.loc[nft_profits["trade_count"] != 0]
     nft_profits = nft_profits.rename(
